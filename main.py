@@ -12,16 +12,16 @@ class MotoTaxiHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", content_type)
         self.end_headers()
 
-    def do_GET(self):
-        # http://localhost:8080/rides
-        if self.path == "/rides":
-            self._set_headers(200)
-            self.wfile.write(json.dumps(rides).encode("utf-8"))
-        else:
-            self._set_headers(404)
-            self.wfile.write(json.dumps({"error": "Path not found!"}).encode("utf-8"))
+# def do_GET(self):
+#         # http://localhost:8080/rides
+#         if self.path == "/rides":
+#             self._set_headers(200)
+#             self.wfile.write(json.dumps(rides).encode("utf-8"))
+#         else:
+#             self._set_headers(404)
+#             self.wfile.write(json.dumps({"error": "Path not found!"}).encode("utf-8"))
 
-    def do_POST(self):
+def do_POST(self):
         if self.path == "/rides":
             content_type = self.headers.get("Content-Type")
             if content_type != "application/json":
@@ -49,6 +49,7 @@ class MotoTaxiHandler(BaseHTTPRequestHandler):
 
                 rides.append(new_ride)
 
+
                 self._set_headers(201)
                 self.wfile.write(json.dumps(new_ride).encode("utf-8"))
             except json.JSONDecodeError:
@@ -59,6 +60,42 @@ class MotoTaxiHandler(BaseHTTPRequestHandler):
             self._set_headers(404)
             self.wfile.write(json.dumps({"error": "Path not faund!"}).encode("utf-8"))
 
+def do_Patch(self):
+    if self.path.startswith("/rides/"):
+        ride_id = int(self.path.split("/")[-1])
+        ride = next((r for r in rides if r["id"] == ride_id), None)
+
+        if not ride:
+            self._set_headers(404)
+            self.wfile.write(json.dumps({"error": "Ride not found"}).encode("utf-8"))
+            return
+
+        content_type = self.headers.get("Content-Type")
+        if content_type != "application/json":
+            self._set_headers(415)
+            self.wfile.write(json.dumps({"error": "Content must be json"}).encode("utf-8"))
+            return
+
+        content_length = int(self.headers.get("Content-Length", 0))
+        if content_length == 0:
+            self._set_headers(400)
+            self.wfile.write(json.dumps({"error": "Content must not be empty"}).encode("utf-8"))
+            return
+
+        try:
+            content = self.rfile.read(content_length)
+            data = json.loads(content)
+
+            # Update the ride status
+            ride["status"] = data.get("status", ride["status"])
+
+            self._set_headers(200)
+            self.wfile.write(json.dumps(ride).encode("utf-8"))
+        except json.JSONDecodeError:
+            self._set_headers(400)
+            self.wfile.write(json.dumps({"error": "Invalid JSON"}).encode("utf-8"))
+
+
 def run():
     server_address = ("", 8080)
     httpd = HTTPServer(server_address, MotoTaxiHandler)
@@ -68,3 +105,4 @@ def run():
 
 if __name__ == "__main__":
     run()
+
