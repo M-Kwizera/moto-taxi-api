@@ -33,6 +33,16 @@ def home():
     return send_from_directory(PROJECT_ROOT, "index.html")
 
 
+@app.get("/style.css")
+def stylesheet():
+    return send_from_directory(PROJECT_ROOT, "style.css")
+
+
+@app.get("/script.js")
+def javascript():
+    return send_from_directory(PROJECT_ROOT, "script.js")
+
+
 @app.get("/health")
 def health():
     return jsonify(status="ok")
